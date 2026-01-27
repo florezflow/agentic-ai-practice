@@ -21,9 +21,9 @@
         "ms-azuretools.vscode-azurefunctions",
         "ms-vscode.azurecli",
         "ms-toolsai.jupyter-keymap",  // Better notebook nav
-        "ms-vscode.azure-account",   // Foundry auth
         "ms-python.black-formatter",  // Consistent formatting
         "TeamsDevApp.vscode-ai-foundry"
+        //"ms-vscode.azure-account",   // Foundry auth
       ],
       "settings": {
         "python.defaultInterpreterPath": "/usr/local/bin/python",
