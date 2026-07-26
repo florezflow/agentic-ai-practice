@@ -23,6 +23,24 @@ multiple entries on the same day.
   `.github/copilot-instructions.md` for surfaces that read nothing else, four path-specific
   `*.instructions.md` files, `.mcp.json`, and Claude Code skills for validate / bump-version /
   new-pattern.
+- Added four custom agent profiles with deliberately different tool postures —
+  `bicep-planner` (no `execute`), `bicep-builder` (full, but refuses to start without a plan),
+  `whatif-analyzer` (read-only), `docs-researcher` (one MCP server, no filesystem) — plus
+  `copilot-setup-steps.yml`, which installs the pinned Bicep CLI and PSRule and then runs the
+  repo's own checks to prove the agent environment can reproduce CI.
+- Added three GitHub Agentic Workflows: `bicep-pr-reviewer` (`add-comment`),
+  `daily-iac-report` (`create-issue`) and `version-sync-fixer` (`create-pull-request`).
+  Compiled with zero warnings by narrowing `toolsets` rather than widening `permissions`.
+- Added `docs/gh600-domain-map.md` and six labs, one per exam domain, plus
+  `docs/mcp-and-firewall.md` and `docs/agentic-workflows.md`.
+
+### Known state
+
+- The agentic workflows are authored and compiled but **not yet runnable**: a personal
+  repository needs a paid Copilot plan and a `COPILOT_GITHUB_TOKEN` secret. Until it is set,
+  the `activation` job fails fast and the `agent` and `safe_outputs` jobs skip.
+- Azure OIDC is not configured. The `whatif` job self-skips with an explanatory summary, and
+  the approval gate still exercises.
 
 ### Repository configuration (not in git)
 
