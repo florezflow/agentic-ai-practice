@@ -1,0 +1,30 @@
+{
+  "$schema": "https://json.schemastore.org/claude-code-settings.json",
+  "permissions": {
+    "allow": [
+      "Bash(bicep build:*)",
+      "Bash(bicep build-params:*)",
+      "Bash(bicep format:*)",
+      "Bash(bicep lint:*)",
+      "Bash(az deployment sub what-if:*)",
+      "Bash(az deployment sub validate:*)",
+      "Bash(az account show:*)",
+      "Bash(bash .github/scripts/validate-version-sync.sh)",
+      "Bash(gh pr view:*)",
+      "Bash(gh pr checks:*)",
+      "Bash(gh run view:*)",
+      "Bash(gh run list:*)"
+    ],
+    "deny": [
+      "Bash(az deployment sub create:*)",
+      "Bash(az deployment group create:*)",
+      "Bash(az stack sub create:*)",
+      "Bash(az stack group create:*)",
+      "Bash(az group delete:*)",
+      "Bash(az resource delete:*)",
+      "Read(./.env)",
+      "Read(./**/*.pem)"
+    ]
+  },
+  "enableAllProjectMcpServers": false
+}
