@@ -4,14 +4,25 @@
 #
 # PSRule is the repo's automated evaluation signal. Its SARIF output is published to code
 # scanning, which makes rule failures visible in the Security tab and in pull requests —
-# a machine-readable answer to "did the agent's change make things worse?".
+# a machine-readable answer to "did this change make things worse?".
 #
 
 configuration:
-  # Expand .bicep and .bicepparam files by invoking the Bicep CLI, so rules see the resources
-  # that would actually be deployed rather than the template text.
-  AZURE_BICEP_FILE_EXPANSION: true
+  # Expand .bicepparam files by invoking the Bicep CLI, so rules see the resources that would
+  # actually be deployed rather than the template text.
   AZURE_BICEP_PARAMS_FILE_EXPANSION: true
+
+  # Bare .bicep expansion is OFF on purpose.
+  #
+  # A pattern template has required parameters with no defaults — that is correct design, not
+  # an oversight. Expanding it standalone therefore fails with
+  # "The parameter named 'parResourceGroups' was not set or a defaultValue was defined",
+  # which is an analysis error, not a finding about the infrastructure.
+  #
+  # In this repo the meaningful unit of analysis is the parameter file: template + values =
+  # a deployment. Every pattern has one per environment, so nothing goes unanalysed.
+  AZURE_BICEP_FILE_EXPANSION: false
+
   AZURE_BICEP_CHECK_TOOL: true
   AZURE_BICEP_FILE_EXPANSION_TIMEOUT: 30
 
@@ -23,10 +34,6 @@ input:
     - 'docs/'
     - '.editorconfig'
     - 'LICENSE'
-    # Modules are fragments: a resource group module has no parameter values of its own, so
-    # expanding it in isolation produces findings about placeholders rather than about the
-    # deployment. The pattern's .bicepparam files are the meaningful unit of analysis.
-    - 'modules/'
 
 output:
   culture:
