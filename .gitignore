@@ -1,15 +1,19 @@
-# Python
-__pycache__/
-*.py[cod]
-venv/
-.venv/
+# Bicep build output
+*.bicep.json
+main.json
 
-# Environment variables (REAL secrets - never commit!)
-.env
+# Azure CLI / local deployment artefacts
+.azure/
+*.whatif.txt
+*-whatif.txt
+whatif-output/
 
-# IDE
+# Editors / OS
 .vscode/
 .idea/
-
-# OS
 .DS_Store
+Thumbs.db
+
+# Local secrets
+.env
+*.local.json
