@@ -1,0 +1,9 @@
+{
+  "version": {
+    "major": 1,
+    "minor": 0,
+    "patch": 0
+  },
+  "level": 1,
+  "iac-managed": true
+}
