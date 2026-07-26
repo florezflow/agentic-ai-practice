@@ -1,0 +1,61 @@
+name: Copilot Setup Steps
+
+# Prepares the environment the Copilot cloud agent works in, so that it can validate its own
+# changes before opening a pull request rather than discovering failures in CI afterwards.
+#
+# Hard requirements from GitHub:
+#   - the job MUST be named `copilot-setup-steps` or it is ignored
+#   - only `steps`, `permissions`, `runs-on`, `services`, `snapshot` and `timeout-minutes`
+#     (max 59) are honoured; anything else set on the job is discarded
+#   - the file must exist on the default branch to take effect
+#
+# It also runs as an ordinary workflow when edited, which is the only way to find out that it
+# is broken before an agent session depends on it.
+
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - .github/workflows/copilot-setup-steps.yml
+  pull_request:
+    paths:
+      - .github/workflows/copilot-setup-steps.yml
+
+jobs:
+  copilot-setup-steps:
+    runs-on: ubuntu-latest
+    # Lowest permissions the steps need. Note this does not affect the token the agent itself
+    # receives — it applies to these setup steps only.
+    permissions:
+      contents: read
+    timeout-minutes: 10
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v5
+
+      - name: Install pinned Bicep CLI
+        env:
+          # Keep in step with the pin in pr-validate.yml. If the agent validates with a
+          # different compiler than CI, it will confidently hand you work that fails.
+          BICEP_VERSION: v0.45.15
+        run: |
+          curl -sLo bicep "https://github.com/Azure/bicep/releases/download/${BICEP_VERSION}/bicep-linux-x64"
+          chmod +x bicep
+          sudo mv bicep /usr/local/bin/bicep
+          bicep --version
+
+      - name: Install PSRule for Azure
+        run: |
+          pwsh -Command "Set-PSRepository -Name PSGallery -InstallationPolicy Trusted; \
+            Install-Module -Name PSRule.Rules.Azure -Scope CurrentUser -Force -AcceptLicense"
+          pwsh -Command "Get-Module -ListAvailable PSRule.Rules.Azure | Select-Object Name, Version"
+
+      - name: Verify the agent can run the repository's own checks
+        run: |
+          # If this fails, the agent's environment cannot reproduce CI — which is worse than
+          # having no setup steps at all, because the agent will believe it validated.
+          bicep build patterns/0001-resource-groups/resource-groups.bicep --stdout > /dev/null
+          bicep build-params patterns/0001-resource-groups/configurations/test/rg_0001-resource-groups_test.bicepparam --stdout > /dev/null
+          bash .github/scripts/validate-version-sync.sh
+          echo "Agent environment can run lint and version-sync locally."
