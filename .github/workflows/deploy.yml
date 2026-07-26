@@ -1,0 +1,284 @@
+name: Deploy
+
+# Manual only, like every deploy pipeline in the repo this is modelled on. Infrastructure
+# does not deploy itself because a branch moved.
+#
+# Two jobs, one gate:
+#
+#   whatif  ->  ungated. Produces the artefact a human reads before deciding.
+#   apply   ->  bound to the `test` / `prod` environment. `prod` has a required reviewer and
+#               a wait timer, so this job pauses until someone approves it.
+#
+# Why the environments come in pairs (`test` and `test-preview`):
+# GitHub scopes environment variables to an environment, and protection rules to the *same*
+# environment. A job that reads `vars.AZURE_CLIENT_ID` must therefore declare
+# `environment:` — and would inherit that environment's approval gate. If `whatif` used
+# `prod`, you would have to approve the deployment before you could see what it does, which
+# is exactly backwards. The `-preview` environments are ungated copies holding the same
+# values, so the gate lands on `apply` alone.
+
+on:
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: 'Target environment'
+        type: choice
+        options:
+          - test
+          - prod
+        default: test
+      configuration:
+        description: 'Parameter file to deploy'
+        type: choice
+        options:
+          - patterns/0001-resource-groups/configurations/test/rg_0001-resource-groups_test.bicepparam
+          - patterns/0001-resource-groups/configurations/prod/rg_0001-resource-groups_prod.bicepparam
+      confirmApply:
+        description: 'Continue to the gated apply job after what-if'
+        type: boolean
+        default: false
+
+permissions:
+  contents: read
+
+# Never run two deployments at the same environment concurrently, and never cancel one that
+# is already waiting for an approver.
+concurrency:
+  group: deploy-${{ inputs.environment }}
+  cancel-in-progress: false
+
+env:
+  BICEP_VERSION: v0.45.15
+
+jobs:
+  whatif:
+    name: what-if (${{ inputs.environment }})
+    runs-on: ubuntu-latest
+    environment: ${{ inputs.environment }}-preview
+    permissions:
+      id-token: write
+      contents: read
+    outputs:
+      azure_configured: ${{ steps.guard.outputs.configured }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v5
+
+      - name: Verify configuration matches the target environment
+        env:
+          CONFIGURATION: ${{ inputs.configuration }}
+          ENVIRONMENT: ${{ inputs.environment }}
+        run: |
+          # A prod parameter file deployed to test (or worse, the reverse) is the kind of
+          # mistake that is obvious in hindsight and invisible in a dropdown. Catch it here.
+          case "$CONFIGURATION" in
+            */configurations/"$ENVIRONMENT"/*)
+              echo "Configuration matches the '$ENVIRONMENT' environment."
+              ;;
+            *)
+              echo "::error::Configuration '$CONFIGURATION' does not live under configurations/$ENVIRONMENT/."
+              echo "::error::Pick a parameter file that belongs to the '$ENVIRONMENT' environment."
+              exit 1
+              ;;
+          esac
+
+      - name: Check Azure OIDC configuration
+        id: guard
+        run: |
+          if [ -z "${{ vars.AZURE_CLIENT_ID }}" ] || [ -z "${{ vars.AZURE_SUBSCRIPTION_ID }}" ]; then
+            echo "configured=false" >> "$GITHUB_OUTPUT"
+            {
+              echo "### What-if skipped"
+              echo ""
+              echo "Azure OIDC is not configured for the \`${{ inputs.environment }}-preview\` environment."
+              echo ""
+              echo "Set these environment **variables** (not secrets — OIDC needs no stored credentials):"
+              echo ""
+              echo '| Variable | Value |'
+              echo '|---|---|'
+              echo '| `AZURE_CLIENT_ID` | Application (client) ID of the Entra app registration |'
+              echo '| `AZURE_TENANT_ID` | Directory (tenant) ID |'
+              echo '| `AZURE_SUBSCRIPTION_ID` | Target subscription |'
+              echo '| `AZURE_LOCATION` | Deployment location, e.g. `switzerlandnorth` |'
+              echo ""
+              echo "See \`docs/labs/06-guardrails.md\` for the federated credential subjects."
+            } >> "$GITHUB_STEP_SUMMARY"
+            echo "::notice::Azure OIDC not configured — what-if skipped. The gate below still works."
+          else
+            echo "configured=true" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Azure login (OIDC)
+        if: steps.guard.outputs.configured == 'true'
+        uses: azure/login@v2
+        with:
+          client-id: ${{ vars.AZURE_CLIENT_ID }}
+          tenant-id: ${{ vars.AZURE_TENANT_ID }}
+          subscription-id: ${{ vars.AZURE_SUBSCRIPTION_ID }}
+
+      - name: Install pinned Bicep CLI
+        if: steps.guard.outputs.configured == 'true'
+        run: |
+          curl -sLo bicep "https://github.com/Azure/bicep/releases/download/${BICEP_VERSION}/bicep-linux-x64"
+          chmod +x bicep
+          sudo mv bicep /usr/local/bin/bicep
+          bicep --version
+
+      - name: Run what-if
+        if: steps.guard.outputs.configured == 'true'
+        env:
+          LOCATION: ${{ vars.AZURE_LOCATION || 'switzerlandnorth' }}
+          SUBSCRIPTION_ID: ${{ vars.AZURE_SUBSCRIPTION_ID }}
+          CONFIGURATION: ${{ inputs.configuration }}
+        run: |
+          set -uo pipefail
+          mkdir -p what-if
+
+          deployment_name="gh600-$(basename "$CONFIGURATION" .bicepparam)-${GITHUB_RUN_NUMBER}"
+
+          # Captured for the artefact. Redirecting strips the colour formatting, which is why
+          # it is then run a second time for the console — same trick the upstream pipeline uses.
+          # `|| whatif_status=$?` is load-bearing: the default shell runs with `-e`, so without
+          # it a failing what-if would abort before the artefact is written.
+          whatif_status=0
+          az deployment sub what-if \
+            --name "$deployment_name" \
+            --location "$LOCATION" \
+            --subscription "$SUBSCRIPTION_ID" \
+            --parameters "$CONFIGURATION" > "what-if/what-if.txt" 2>&1 || whatif_status=$?
+
+          echo "::group::What-if result"
+          az deployment sub what-if \
+            --name "$deployment_name" \
+            --location "$LOCATION" \
+            --subscription "$SUBSCRIPTION_ID" \
+            --parameters "$CONFIGURATION" || true
+          echo "::endgroup::"
+
+          # Provenance sidecar: an artefact nobody can trace back to a commit is not evidence.
+          cat > what-if/metadata.json <<JSON
+          {
+            "environment": "${{ inputs.environment }}",
+            "configuration": "$CONFIGURATION",
+            "deploymentName": "$deployment_name",
+            "subscriptionId": "$SUBSCRIPTION_ID",
+            "location": "$LOCATION",
+            "commit": "${GITHUB_SHA}",
+            "ref": "${GITHUB_REF}",
+            "actor": "${GITHUB_ACTOR}",
+            "runUrl": "${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}"
+          }
+          JSON
+
+          {
+            echo "### What-if — \`${{ inputs.environment }}\`"
+            echo ""
+            echo "Configuration: \`$CONFIGURATION\`"
+            echo ""
+            echo '```'
+            cat what-if/what-if.txt
+            echo '```'
+          } >> "$GITHUB_STEP_SUMMARY"
+
+          exit "$whatif_status"
+
+      - name: Upload what-if artefact
+        if: always() && steps.guard.outputs.configured == 'true'
+        uses: actions/upload-artifact@v4
+        with:
+          name: what-if-${{ github.run_number }}
+          path: what-if/
+          retention-days: 30
+
+  apply:
+    name: apply (${{ inputs.environment }})
+    needs: whatif
+    if: ${{ inputs.confirmApply }}
+    runs-on: ubuntu-latest
+    # THIS LINE IS THE GATE. `prod` carries a required reviewer and a wait timer, so the run
+    # stops here until a human approves it. Nothing else in this file enforces that.
+    environment: ${{ inputs.environment }}
+    permissions:
+      id-token: write
+      contents: read
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v5
+
+      - name: Check Azure OIDC configuration
+        id: guard
+        run: |
+          if [ -z "${{ vars.AZURE_CLIENT_ID }}" ] || [ -z "${{ vars.AZURE_SUBSCRIPTION_ID }}" ]; then
+            echo "configured=false" >> "$GITHUB_OUTPUT"
+            echo "::notice::Azure OIDC not configured — nothing to validate. The approval gate above still ran."
+          else
+            echo "configured=true" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Azure login (OIDC)
+        if: steps.guard.outputs.configured == 'true'
+        uses: azure/login@v2
+        with:
+          client-id: ${{ vars.AZURE_CLIENT_ID }}
+          tenant-id: ${{ vars.AZURE_TENANT_ID }}
+          subscription-id: ${{ vars.AZURE_SUBSCRIPTION_ID }}
+
+      - name: Install pinned Bicep CLI
+        if: steps.guard.outputs.configured == 'true'
+        run: |
+          curl -sLo bicep "https://github.com/Azure/bicep/releases/download/${BICEP_VERSION}/bicep-linux-x64"
+          chmod +x bicep
+          sudo mv bicep /usr/local/bin/bicep
+
+      - name: Validate deployment
+        if: steps.guard.outputs.configured == 'true'
+        env:
+          LOCATION: ${{ vars.AZURE_LOCATION || 'switzerlandnorth' }}
+          SUBSCRIPTION_ID: ${{ vars.AZURE_SUBSCRIPTION_ID }}
+          CONFIGURATION: ${{ inputs.configuration }}
+        run: |
+          # Non-mutating. This is as far as the repo goes by default.
+          az deployment sub validate \
+            --location "$LOCATION" \
+            --subscription "$SUBSCRIPTION_ID" \
+            --parameters "$CONFIGURATION" \
+            --no-prompt true
+
+      - name: Deploy stack
+        # Disabled by default via the ALLOW_REAL_DEPLOY repository variable. The command is
+        # kept, correct and reviewable rather than absent, so that turning the repo into a
+        # real deployment pipeline is a variable flip and not a rewrite.
+        #
+        # Read `patterns/*/docs/deployment-notes.md` before setting it: with
+        # --action-on-unmanage deleteAll, a resource that leaves the template gets deleted.
+        if: steps.guard.outputs.configured == 'true' && vars.ALLOW_REAL_DEPLOY == 'true'
+        env:
+          LOCATION: ${{ vars.AZURE_LOCATION || 'switzerlandnorth' }}
+          SUBSCRIPTION_ID: ${{ vars.AZURE_SUBSCRIPTION_ID }}
+          CONFIGURATION: ${{ inputs.configuration }}
+        run: |
+          stack_name="$(basename "$(dirname "$(dirname "$(dirname "$CONFIGURATION")")")")"
+          az stack sub create \
+            --name "$stack_name" \
+            --location "$LOCATION" \
+            --action-on-unmanage deleteAll \
+            --deny-settings-mode none \
+            --subscription "$SUBSCRIPTION_ID" \
+            --parameters "$CONFIGURATION" \
+            --bse \
+            --yes
+
+      - name: Summary
+        if: always()
+        run: |
+          {
+            echo "### Apply — \`${{ inputs.environment }}\`"
+            echo ""
+            if [ "${{ steps.guard.outputs.configured }}" != "true" ]; then
+              echo "Azure OIDC not configured. The approval gate ran; nothing was contacted."
+            elif [ "${{ vars.ALLOW_REAL_DEPLOY }}" = "true" ]; then
+              echo "Deployment stack applied. :warning: \`ALLOW_REAL_DEPLOY\` is on."
+            else
+              echo "Validated only. \`ALLOW_REAL_DEPLOY\` is \`false\`, so nothing was created."
+            fi
+          } >> "$GITHUB_STEP_SUMMARY"
