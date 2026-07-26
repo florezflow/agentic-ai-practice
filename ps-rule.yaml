@@ -1,0 +1,51 @@
+#
+# PSRule for Azure configuration.
+# https://azure.github.io/PSRule.Rules.Azure/setup/configuring-options/
+#
+# PSRule is the repo's automated evaluation signal. Its SARIF output is published to code
+# scanning, which makes rule failures visible in the Security tab and in pull requests —
+# a machine-readable answer to "did this change make things worse?".
+#
+
+configuration:
+  # Expand .bicepparam files by invoking the Bicep CLI, so rules see the resources that would
+  # actually be deployed rather than the template text.
+  AZURE_BICEP_PARAMS_FILE_EXPANSION: true
+
+  # Bare .bicep expansion is OFF on purpose.
+  #
+  # A pattern template has required parameters with no defaults — that is correct design, not
+  # an oversight. Expanding it standalone therefore fails with
+  # "The parameter named 'parResourceGroups' was not set or a defaultValue was defined",
+  # which is an analysis error, not a finding about the infrastructure.
+  #
+  # In this repo the meaningful unit of analysis is the parameter file: template + values =
+  # a deployment. Every pattern has one per environment, so nothing goes unanalysed.
+  AZURE_BICEP_FILE_EXPANSION: false
+
+  AZURE_BICEP_CHECK_TOOL: true
+  AZURE_BICEP_FILE_EXPANSION_TIMEOUT: 30
+
+input:
+  pathIgnore:
+    - '*.md'
+    - '**/*.md'
+    - '.github/'
+    - 'docs/'
+    - '.editorconfig'
+    - 'LICENSE'
+
+output:
+  culture:
+    - 'en-US'
+
+execution:
+  # Not every file in the repo is an Azure deployment; do not treat that as an error.
+  unprocessedObject: Ignore
+  invariantCulture: Ignore
+
+rule:
+  # Deliberately empty. When a rule fires, the first question is "is the finding real?" —
+  # not "how do I silence it?". Add an exclusion here only with a one-line reason, so that
+  # every suppressed rule is a recorded decision rather than an accumulated default.
+  exclude: []

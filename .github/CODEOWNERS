@@ -1,0 +1,40 @@
+# CODEOWNERS
+#
+# The point of this file in an agentic repo is narrow and specific: an agent must not be able
+# to widen its own guardrails without a human looking at it. Everything that defines what
+# agents may do — their profiles, their instructions, the workflows that gate their output —
+# is owned here.
+#
+# Two things to know:
+#
+#  1. Ownership alone does not block anything. It only requests a review. The block comes from
+#     enabling "Require review from Code Owners" in the `main-protection` ruleset. That is off
+#     by default in this repo, because a solo maintainer cannot approve their own pull request
+#     and would deadlock. Turn it on before running the agent-authored-PR lab
+#     (docs/labs/06-guardrails.md), where the agent is the author and you are the reviewer.
+#
+#  2. Later rules win. Keep the catch-all first.
+
+# Everything, by default.
+*                           @mflorez-bag
+
+# --- Agent control surface --------------------------------------------------------------
+# Changing any of these changes what an agent is permitted to do.
+/AGENTS.md                  @mflorez-bag
+/CLAUDE.md                  @mflorez-bag
+/.github/agents/            @mflorez-bag
+/.github/instructions/      @mflorez-bag
+/.github/copilot-instructions.md  @mflorez-bag
+/.claude/                   @mflorez-bag
+/.mcp.json                  @mflorez-bag
+
+# --- CI/CD control surface --------------------------------------------------------------
+# Changing these changes the gates themselves, including whether they run at all.
+/.github/workflows/         @mflorez-bag
+/.github/scripts/           @mflorez-bag
+/.github/CODEOWNERS         @mflorez-bag
+/ps-rule.yaml               @mflorez-bag
+/bicepconfig.json           @mflorez-bag
+
+# --- Production configuration -----------------------------------------------------------
+/patterns/*/configurations/prod/   @mflorez-bag

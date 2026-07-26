@@ -1,0 +1,171 @@
+name: PR Validation
+
+# These three jobs are the required status checks on `main`. Nothing merges without them —
+# including pull requests opened by agents. That is the point: the gate does not care who or
+# what wrote the change.
+
+on:
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+# Least privilege by default. The psrule job widens this for itself, and only for itself.
+permissions:
+  contents: read
+
+concurrency:
+  group: pr-validate-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+env:
+  # Central version pin. Bump here, nowhere else.
+  BICEP_VERSION: v0.45.15
+
+jobs:
+  lint:
+    name: lint
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v5
+
+      - name: Install pinned Bicep CLI
+        run: |
+          curl -sLo bicep "https://github.com/Azure/bicep/releases/download/${BICEP_VERSION}/bicep-linux-x64"
+          chmod +x bicep
+          sudo mv bicep /usr/local/bin/bicep
+          bicep --version
+
+      - name: Build templates
+        run: |
+          set -uo pipefail
+          status=0
+          found=0
+
+          # Modules use main.bicep; patterns use <name>.bicep next to metadata.json.
+          templates=$(
+            { find modules -name 'main.bicep' -type f 2>/dev/null
+              find patterns -maxdepth 2 -name '*.bicep' -type f 2>/dev/null
+            } | sort -u
+          )
+
+          for template in $templates; do
+            found=$((found + 1))
+            echo "::group::bicep build $template"
+            if ! bicep build "$template" --stdout > /dev/null; then
+              echo "::error file=$template::bicep build failed"
+              status=1
+            fi
+            echo "::endgroup::"
+          done
+
+          if [ "$found" -eq 0 ]; then
+            echo "::error::No Bicep templates found — the build step is not looking where it should."
+            exit 1
+          fi
+
+          echo "Built $found template(s)."
+          exit "$status"
+
+      - name: Build parameter files
+        run: |
+          set -uo pipefail
+          status=0
+          found=0
+
+          for param in $(find patterns -name '*.bicepparam' -type f | sort); do
+            found=$((found + 1))
+            echo "::group::bicep build-params $param"
+            if ! bicep build-params "$param" --stdout > /dev/null; then
+              echo "::error file=$param::bicep build-params failed"
+              status=1
+            fi
+            echo "::endgroup::"
+          done
+
+          if [ "$found" -eq 0 ]; then
+            echo "::error::No .bicepparam files found — a pattern without a configuration cannot be deployed."
+            exit 1
+          fi
+
+          echo "Built $found parameter file(s)."
+          exit "$status"
+
+      - name: Summary
+        if: always()
+        run: |
+          {
+            echo "### Bicep lint"
+            echo ""
+            echo "Bicep CLI \`${BICEP_VERSION}\`, linter rules from \`bicepconfig.json\`."
+            echo ""
+            echo "Result: **${{ job.status }}**"
+          } >> "$GITHUB_STEP_SUMMARY"
+
+  psrule:
+    name: psrule
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      # Needed to publish the SARIF to the Security tab. Free on public repositories.
+      security-events: write
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v5
+
+      - name: Install pinned Bicep CLI
+        run: |
+          curl -sLo bicep "https://github.com/Azure/bicep/releases/download/${BICEP_VERSION}/bicep-linux-x64"
+          chmod +x bicep
+          sudo mv bicep /usr/local/bin/bicep
+          bicep --version
+
+      - name: Run PSRule for Azure
+        id: psrule
+        # Findings must reach the Security tab even when the analysis itself fails, so this
+        # step never short-circuits the upload below. The gate is re-applied afterwards.
+        continue-on-error: true
+        uses: microsoft/ps-rule@v2.9.0
+        with:
+          modules: PSRule.Rules.Azure
+          inputType: repository
+          outputFormat: Sarif
+          outputPath: reports/ps-rule.sarif
+          summary: true
+
+      - name: Upload SARIF to code scanning
+        if: always() && hashFiles('reports/ps-rule.sarif') != ''
+        uses: github/codeql-action/upload-sarif@v3
+        with:
+          sarif_file: reports/ps-rule.sarif
+          category: psrule-azure
+
+      - name: Enforce result
+        if: always()
+        run: |
+          if [ "${{ steps.psrule.outcome }}" != "success" ]; then
+            echo "::error::PSRule for Azure reported failures. Findings are in the Security tab under 'psrule-azure'."
+            exit 1
+          fi
+          echo "PSRule for Azure passed."
+
+  version-sync:
+    name: version-sync
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v5
+
+      - name: Validate version synchronisation
+        run: bash .github/scripts/validate-version-sync.sh
+
+      - name: Summary
+        if: always()
+        run: |
+          {
+            echo "### Version sync"
+            echo ""
+            echo "\`metadata.json\` ↔ \`metadata version\` ↔ \`CHANGELOG.md\` must agree for every component."
+            echo ""
+            echo "Result: **${{ job.status }}**"
+          } >> "$GITHUB_STEP_SUMMARY"
