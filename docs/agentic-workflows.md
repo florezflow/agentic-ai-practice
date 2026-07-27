@@ -87,6 +87,42 @@ On an organisation-owned repository you would instead add `copilot-requests: wri
 That difference — personal repo needs a token, org repo needs a policy — is the kind of thing
 the exam asks about.
 
+## Choosing a model — and the failure it causes
+
+`gh aw` defaults to `claude-sonnet-4.6`. **That model is not available on every Copilot tier**,
+and when it isn't, the run dies with:
+
+```
+[copilot-harness] attempt 1: model not supported — not retrying
+(the requested model is unavailable for this subscription tier;
+ specify a supported model in the workflow frontmatter)
+```
+
+To find out what your token can actually use, run any workflow once and read
+`agent/sandbox/firewall/logs/api-proxy-logs/models.json` from the run artefacts. It lists the
+models the server offered *your* subscription — which is a shorter list than the catalogue in
+`activation/models.json`.
+
+Set the model repository-wide rather than per workflow:
+
+```bash
+gh aw env get aw-env.yml
+# set default_model_copilot: "gpt-4.1"
+gh aw env update aw-env.yml --scope repo
+```
+
+Observed on this repo's Copilot seat (an organisation-assigned one):
+
+| Model | Result |
+|---|---|
+| `claude-sonnet-4.6` (gh-aw default) | ✗ not supported on this tier |
+| `claude-sonnet-5` | Produced a noticeably better review, then `HTTP 403 authentication_failed` mid-run |
+| `gpt-4.1` | ✓ Completed. Review quality is weaker — it mis-stated which files the PR changed |
+
+That middle row is worth understanding: a model can be *listed* and still be refused at
+inference time by organisation policy or quota. The failure class is `authentication_failed`,
+which is misleading — the token is fine.
+
 ## Agentic workflows vs. the cloud agent
 
 Both run Copilot; they are not the same thing and are configured separately.

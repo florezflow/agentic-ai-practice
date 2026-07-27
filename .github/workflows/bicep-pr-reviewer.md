@@ -109,5 +109,18 @@ the top of your comment in plain words, and say what would be deleted.
 <optional: things worth knowing that are not rule violations>
 ```
 
-If you found nothing, say so in one line and stop. A short comment that a reviewer trusts is
-worth more than a long one they learn to scroll past.
+If you found nothing, say so in one line. A short comment that a reviewer trusts is worth more
+than a long one they learn to scroll past.
+
+## Always post the comment
+
+**Use `add-comment` on every run, including when you have no findings.** Do not use the `noop`
+safe output. "No findings" is a result, and a reviewer needs to see that the review ran and
+concluded — silence is indistinguishable from the workflow being broken.
+
+`noop` is only correct if the pull request changes no `.bicep` or `.bicepparam` files at all.
+
+(This instruction exists because the first real run of this workflow produced a perfectly good
+review and then emitted it as `noop`, so nothing was posted. The earlier wording said "say so
+in one line and stop", and the agent read "stop" as "stay silent". Worth remembering: an
+instruction that is clear to a human can still route an agent to the wrong tool.)

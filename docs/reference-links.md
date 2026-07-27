@@ -114,3 +114,11 @@ Each of these cost real time somewhere, and each has a page above:
   running. Silently.
 - **An OIDC `subject` must match exactly.** A typo fails at runtime with a generic error that
   names nothing useful.
+- **`gh aw`'s default model may not exist on your Copilot tier.** It defaults to
+  `claude-sonnet-4.6`; the run dies with "model not supported". The list your token can really
+  use is in `agent/sandbox/firewall/logs/api-proxy-logs/models.json` in the run artefacts.
+- **A listed model can still be refused at inference time** by organisation policy or quota.
+  It reports as `authentication_failed` / HTTP 403, which points at the token — wrongly.
+- **An agent can produce a perfect result and emit it through the wrong safe output.** Ours
+  wrote a correct review and returned it as `noop`, so nothing was posted. Read
+  `agent/agent_output.json` in the artefacts before concluding the agent did nothing.

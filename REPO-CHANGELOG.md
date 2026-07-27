@@ -52,6 +52,12 @@ multiple entries on the same day.
 - Added `docs/reference-links.md` — every official documentation page the repo depends on, in
   one place — and short explanatory comments with links into it across the workflows, agent
   profiles, Bicep templates and parameter files.
+- Pinned `GH_AW_DEFAULT_MODEL_COPILOT = gpt-4.1`. The `gh aw` default `claude-sonnet-4.6` is
+  not available on this Copilot tier and every run failed with "model not supported".
+  `claude-sonnet-5` reviewed better but was refused mid-run with HTTP 403.
+- Tuned `bicep-pr-reviewer` to always use `add-comment`, never `noop`. Its first successful run
+  produced a correct review and returned it as `noop`, so nothing was posted — the previous
+  wording said "say so in one line and stop", and the agent read "stop" as "stay silent".
 
 ### Known state
 
