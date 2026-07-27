@@ -54,7 +54,9 @@ multiple entries on the same day.
   profiles, Bicep templates and parameter files.
 - Pinned `GH_AW_DEFAULT_MODEL_COPILOT = gpt-4.1`. The `gh aw` default `claude-sonnet-4.6` is
   not available on this Copilot tier and every run failed with "model not supported".
-  `claude-sonnet-5` reviewed better but was refused mid-run with HTTP 403.
+  `claude-sonnet-5` and `gpt-5.5` are both *listed* as available and both fail identically with
+  HTTP 403 mid-run, so this org-assigned seat can use base models through the CLI but not
+  premium ones. `gpt-4.1` completes, at 3.25 AI credits for a 21-file review.
 - Tuned `bicep-pr-reviewer` to always use `add-comment`, never `noop`. Its first successful run
   produced a correct review and returned it as `noop`, so nothing was posted — the previous
   wording said "say so in one line and stop", and the agent read "stop" as "stay silent".
