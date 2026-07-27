@@ -117,8 +117,15 @@ Each of these cost real time somewhere, and each has a page above:
 - **`gh aw`'s default model may not exist on your Copilot tier.** It defaults to
   `claude-sonnet-4.6`; the run dies with "model not supported". The list your token can really
   use is in `agent/sandbox/firewall/logs/api-proxy-logs/models.json` in the run artefacts.
-- **A listed model can still be refused at inference time** by organisation policy or quota.
-  It reports as `authentication_failed` / HTTP 403, which points at the token — wrongly.
+- **`GH_AW_DEFAULT_MAX_AI_CREDITS` is enforced as HTTP 403**, reported as
+  `failureClass=authentication_failed`, with the CLI suggesting you check your API key. It is
+  the budget, not the token. The proxy address `172.30.0.30` is the tell — that is gh-aw's own
+  container, not GitHub. Confirm in the run artefacts at
+  `agent/sandbox/firewall/logs/api-proxy-logs/token-usage.jsonl`, which shows the running
+  credit total per call.
+- **A cap tight enough for a cheap model silently breaks an expensive one.** `claude-sonnet-5`
+  spends ~16.5 credits on its first call; `gpt-4.1` does a whole review for ~3.25. Set the cap
+  for the model you actually use.
 - **An agent can produce a perfect result and emit it through the wrong safe output.** Ours
   wrote a correct review and returned it as `noop`, so nothing was posted. Read
   `agent/agent_output.json` in the artefacts before concluding the agent did nothing.

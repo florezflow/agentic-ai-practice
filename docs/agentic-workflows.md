@@ -111,36 +111,66 @@ gh aw env get aw-env.yml
 gh aw env update aw-env.yml --scope repo
 ```
 
-Observed on this repo's Copilot seat (an organisation-assigned one), four runs:
+Observed on this repo's Copilot seat, five runs:
 
-| Model | Listed? | Result |
-|---|---|---|
-| `claude-sonnet-4.6` (gh-aw default) | no | ✗ `model not supported` — never starts |
-| `claude-sonnet-5` | **yes** | ✗ ran 41s, produced a good review, then `HTTP 403` |
-| `gpt-5.5` | **yes** | ✗ same `HTTP 403`, same point in the run |
-| `gpt-4.1` | yes | ✓ Completed and posted. 3.25 AI credits |
+| Model | Result |
+|---|---|
+| `claude-sonnet-4.6` (gh-aw default) | ✗ `model not supported` — not offered to this account at all |
+| `claude-sonnet-5` @ 30-credit cap | ✗ HTTP 403 after 6 calls |
+| `gpt-5.5` @ 30-credit cap | ✗ HTTP 403, same way |
+| `gpt-4.1` @ 30-credit cap | ✓ completed — it is cheap enough to fit |
+| `claude-sonnet-5` @ 150-credit cap | ✓ completed |
 
-**The conclusion those four runs support: this seat can use base models through the CLI, but
-not premium ones.** It is not an Anthropic-versus-OpenAI split — `gpt-5.5` fails exactly like
-`claude-sonnet-5`. `gpt-4.1` is the included model and works.
+**Only the first row is an entitlement problem.** The rest were the per-run credit cap, and
+diagnosing them as anything else cost an afternoon. The story is worth keeping because the
+misdiagnosis is the interesting part.
 
-Two traps in that table:
+### The cap is enforced as HTTP 403
 
-- **Being listed in `models.json` does not mean you may use it.** The list is what the server
-  advertises; the entitlement check happens per request.
-- **The failure reports as `failureClass=authentication_failed` with HTTP 403**, and the CLI
-  suggests checking `COPILOT_PROVIDER_API_KEY`. The token is fine. Nothing in the error names
-  the model or the entitlement, which is what makes this cost an afternoon.
+`GH_AW_DEFAULT_MAX_AI_CREDITS` is enforced by gh-aw's own API proxy, which sits between the
+Copilot CLI and GitHub. When a run exceeds it, the proxy rejects further requests with **HTTP
+403** — and the harness classifies that as:
 
-To use a premium model you need either an organisation policy that permits premium models for
-Copilot CLI, or a personal Copilot subscription with its own credit allowance, rather than an
-org-assigned seat.
+```
+failureClass=authentication_failed
+isCAPIQuotaExceededError=false   isInvocationCapExceeded=false
+Authentication failed with provider at http://172.30.0.30:10002 (HTTP 403).
+  Check your COPILOT_PROVIDER_API_KEY or COPILOT_PROVIDER_BEARER_TOKEN.
+```
 
-### Cost, measured
+Every word of that points at credentials. Nothing mentions the budget. The `172.30.0.30`
+address is the local proxy container, not GitHub — that is the tell.
 
-The comment footer reports actual spend. The `gpt-4.1` review of a 21-file pull request cost
-**3.25 AI credits**, so the repository caps (30 per run, 100 per day) allow roughly 30 reviews
-a day. Adjust once you have your own numbers.
+**Read the numbers, not the label.** The truth is in the run artefacts at
+`agent/sandbox/firewall/logs/api-proxy-logs/token-usage.jsonl`:
+
+```
+call 1   16.540 credits   running total  16.540   claude-sonnet-5   status 200
+call 2    4.189                          20.729                     status 200
+...
+call 6    2.806                          30.331   ← crossed the cap
+call 7        —                               —                     status 403
+```
+
+Six successful `status: 200` completions prove the model was entitled and working. An
+entitlement failure would have been rejected on call 1.
+
+### Budget accordingly
+
+Cost varies enormously by model. Reviewing the same pull request:
+
+| Model | Cost |
+|---|---|
+| `claude-sonnet-5` | ~16.5 credits on the first call alone, 30+ for a full review |
+| `gpt-4.1` | ~3.25 credits billed for the whole review |
+
+The first call is the expensive one — it writes the context cache (39K cache-write tokens
+here). Later calls read from it cheaply.
+
+So a cap tight enough for `gpt-4.1` silently breaks `claude-sonnet-5`. This repo now runs
+`claude-sonnet-5` with 150 credits per run and 600 per day. Tune both against your own
+allowance; if you switch to a cheaper model, lower them again rather than leaving headroom you
+are not using.
 
 ## Agentic workflows vs. the cloud agent
 
