@@ -52,11 +52,16 @@ multiple entries on the same day.
 - Added `docs/reference-links.md` — every official documentation page the repo depends on, in
   one place — and short explanatory comments with links into it across the workflows, agent
   profiles, Bicep templates and parameter files.
-- Pinned `GH_AW_DEFAULT_MODEL_COPILOT = gpt-4.1`. The `gh aw` default `claude-sonnet-4.6` is
-  not available on this Copilot tier and every run failed with "model not supported".
-  `claude-sonnet-5` and `gpt-5.5` are both *listed* as available and both fail identically with
-  HTTP 403 mid-run, so this org-assigned seat can use base models through the CLI but not
-  premium ones. `gpt-4.1` completes, at 3.25 AI credits for a 21-file review.
+- Set `GH_AW_DEFAULT_MODEL_COPILOT = claude-sonnet-5`, with `GH_AW_DEFAULT_MAX_AI_CREDITS = 150`
+  and `GH_AW_DEFAULT_MAX_DAILY_AI_CREDITS = 600`.
+
+  The `gh aw` default `claude-sonnet-4.6` is genuinely not offered to this account. Everything
+  else blamed on entitlements earlier today was wrong: `claude-sonnet-5` and `gpt-5.5` failed
+  because of the 30-credit-per-run cap set the same morning. gh-aw's proxy enforces that cap
+  with HTTP 403 and the harness reports `failureClass=authentication_failed`, so it reads as a
+  token problem. `token-usage.jsonl` shows six `status: 200` completions reaching 30.331
+  credits, then 403s — a model that was never entitled would have failed on the first call.
+  `gpt-4.1` survived only because it is roughly five times cheaper per call.
 - Tuned `bicep-pr-reviewer` to always use `add-comment`, never `noop`. Its first successful run
   produced a correct review and returned it as `noop`, so nothing was posted — the previous
   wording said "say so in one line and stop", and the agent read "stop" as "stay silent".
