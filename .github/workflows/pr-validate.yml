@@ -3,6 +3,15 @@ name: PR Validation
 # These three jobs are the required status checks on `main`. Nothing merges without them —
 # including pull requests opened by agents. That is the point: the gate does not care who or
 # what wrote the change.
+#
+# Reference:
+#   workflow syntax        https://docs.github.com/actions/reference/workflows-and-actions/workflow-syntax
+#   GITHUB_TOKEN & scopes  https://docs.github.com/actions/security-for-github-actions/security-guides/automatic-token-authentication
+#   rulesets (the gate)    https://docs.github.com/repositories/configuring-branches-and-merges-in-your-repository/managing-rulesets/about-rulesets
+#   bicep linter rules     https://learn.microsoft.com/azure/azure-resource-manager/bicep/linter
+#   PSRule for Azure       https://azure.github.io/PSRule.Rules.Azure/
+#   SARIF -> code scanning https://docs.github.com/code-security/code-scanning/integrating-with-code-scanning/uploading-a-sarif-file-to-github
+#   all links in one place docs/reference-links.md
 
 on:
   pull_request:

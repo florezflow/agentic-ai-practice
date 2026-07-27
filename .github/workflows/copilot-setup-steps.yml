@@ -11,6 +11,11 @@ name: Copilot Setup Steps
 #
 # It also runs as an ordinary workflow when edited, which is the only way to find out that it
 # is broken before an agent session depends on it.
+#
+# Reference:
+#   this file's spec  https://docs.github.com/copilot/how-tos/agents/copilot-coding-agent/customizing-the-development-environment-for-copilot-coding-agent
+#   agent firewall    https://docs.github.com/copilot/how-tos/use-copilot-agents/coding-agent/customize-the-agent-firewall
+#   all links         docs/reference-links.md
 
 on:
   workflow_dispatch:

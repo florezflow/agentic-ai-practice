@@ -34,19 +34,46 @@ multiple entries on the same day.
 - Added `docs/gh600-domain-map.md` and six labs, one per exam domain, plus
   `docs/mcp-and-firewall.md` and `docs/agentic-workflows.md`.
 
+## 2026.07.27 - 27.07.2026
+
+- Configured Azure OIDC end to end. Entra app registration `mfl-deploy-gh-action`
+  (client `70ac3c10-fc4a-4a04-911e-daa540a85e8c`) in tenant
+  `54dd9757-341b-4fa9-8016-1f47cd42f780`, with one federated credential per environment and
+  Contributor on the sponsorship subscription `f5c4a850-…`. `AZURE_CLIENT_ID`,
+  `AZURE_TENANT_ID`, `AZURE_SUBSCRIPTION_ID` and `AZURE_LOCATION` set as variables on all four
+  environments. Verified: `what-if` against `test` returns 3 resource groups to create.
+- Set `COPILOT_GITHUB_TOKEN`, so the agentic workflows can run.
+- Added AI spending caps as repository variables — 30 credits per run, 100 per day, 20 turns,
+  15 minutes. The built-in fallback was 5,000 credits/day, well above a monthly allowance, so
+  the brake would never have engaged.
+- Changed `daily-iac-report` from `schedule: daily` to `workflow_dispatch`. It compiled to a
+  real cron and would have spent credits nightly, unattended, from the moment the token
+  existed.
+- Added `docs/reference-links.md` — every official documentation page the repo depends on, in
+  one place — and short explanatory comments with links into it across the workflows, agent
+  profiles, Bicep templates and parameter files.
+
 ### Known state
 
-- The agentic workflows are authored and compiled but **not yet runnable**: a personal
-  repository needs a paid Copilot plan and a `COPILOT_GITHUB_TOKEN` secret. Until it is set,
-  the `activation` job fails fast and the `agent` and `safe_outputs` jobs skip.
-- Azure OIDC is not configured. The `whatif` job self-skips with an explanatory summary, and
-  the approval gate still exercises.
+- Everything is now wired: gates, approval gate, agentic workflows and real Azure what-if.
+- **Nothing is ever created in Azure.** `ALLOW_REAL_DEPLOY` is `false`, so `apply` runs
+  `az deployment sub validate` and stops there.
+- `daily-iac-report` is manual-only. Switch it back to `schedule: daily` once you know what a
+  run costs against your credit allowance.
 
 ### Repository configuration (not in git)
 
 - Environments: `test`, `prod` (required reviewer + 1 minute wait timer), and ungated
-  `test-preview` / `prod-preview` used by the what-if job.
+  `test-preview` / `prod-preview` used by the what-if job. All four carry the four
+  `AZURE_*` variables.
 - Ruleset `main-protection` on the default branch: pull request required, conversation
   resolution required, force-push and deletion blocked, `lint` + `psrule` + `version-sync`
-  required to pass.
-- Repository variable `ALLOW_REAL_DEPLOY = false`.
+  required to pass. `require_code_owner_review` is deliberately **off** — a solo maintainer
+  cannot approve their own pull request.
+- Repository secret: `COPILOT_GITHUB_TOKEN`.
+- Repository variables: `ALLOW_REAL_DEPLOY = false`, `GH_AW_DEFAULT_MAX_AI_CREDITS = 30`,
+  `GH_AW_DEFAULT_MAX_DAILY_AI_CREDITS = 100`, `GH_AW_DEFAULT_DETECTION_MAX_AI_CREDITS = 5`,
+  `GH_AW_DEFAULT_MAX_TURNS = 20`, `GH_AW_DEFAULT_TIMEOUT_MINUTES = 15`.
+- Azure: Entra app `mfl-deploy-gh-action`, four federated credentials
+  (`repo:mflorez-bag/agentic-ai-practice:environment:<env>`), Contributor on the sponsorship
+  subscription.

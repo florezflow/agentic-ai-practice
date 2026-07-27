@@ -4,18 +4,29 @@
 # It cannot change code, cannot approve, cannot merge. Its only write capability is
 # `add-comment`, declared below. Everything else it might want to do is simply absent —
 # not blocked by a rule it could be argued out of.
+#
+# Docs for every field below: https://github.github.com/gh-aw/reference/frontmatter/
+
+# WHEN it runs. Fires on every push to an open pull request.
+# https://github.github.com/gh-aw/reference/triggers/
 on:
   pull_request:
     types: [opened, synchronize, reopened]
 
+# WHAT IT MAY READ. Both `read` — a reviewer that could write to the repo is not a reviewer.
+# https://github.github.com/gh-aw/reference/permissions/
 permissions:
   contents: read
   pull-requests: read
 
+# WHICH AI runs it. https://github.github.com/gh-aw/reference/engines/
 engine: copilot
 
+# NETWORK access: a curated allowlist, not the open internet.
+# https://github.github.com/gh-aw/reference/network/
 network: defaults
 
+# WHICH GITHUB TOOLS the agent gets. https://github.github.com/gh-aw/reference/tools/
 tools:
   github:
     # Not `default` — that pulls in the issues toolset, which would need `issues: read` for
@@ -23,6 +34,8 @@ tools:
     # fix for a permissions warning is usually to want less, not to grant more.
     toolsets: [context, repos, pull_requests]
 
+# WHAT IT MAY WRITE — the entire list. One comment, nothing else.
+# https://github.github.com/gh-aw/reference/safe-outputs/
 safe-outputs:
   add-comment:
     max: 1

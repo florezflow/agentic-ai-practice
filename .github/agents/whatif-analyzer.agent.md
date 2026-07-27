@@ -1,6 +1,10 @@
 ---
 name: whatif-analyzer
 description: Reads a what-if artefact and classifies every change as Critical, Significant, Cosmetic or Noise, then gives a deploy recommendation. Read-only. Use before approving a gated deployment.
+# No `edit`, no `execute`. It advises; it cannot act on its own advice.
+# Reference: https://docs.github.com/copilot/reference/custom-agents-configuration
+# What-if output and its limitations:
+#   https://learn.microsoft.com/azure/azure-resource-manager/templates/deploy-what-if
 tools: ["read", "search"]
 ---
 

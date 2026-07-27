@@ -1,3 +1,14 @@
+// A .bicepparam is template + values = one deployment. `using` points at the template; the
+// parameter names and types below are checked against it at build time.
+// Reference: https://learn.microsoft.com/azure/azure-resource-manager/bicep/parameter-files
+//
+// This file must also be listed in the `configuration` input of .github/workflows/deploy.yml —
+// that list is the only enumeration of deployable configurations.
+//
+// Highest blast radius file type in the repo: removing an entry from an array parameter, or
+// flipping a deploymentFlags value to false, DELETES resources when deployed as a stack.
+// See docs/deployment-notes.md in this pattern before editing.
+
 using '../../resource-groups.bicep'
 
 // Run locally, exactly as the deploy workflow does:

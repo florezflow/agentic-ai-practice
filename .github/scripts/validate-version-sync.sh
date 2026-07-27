@@ -16,6 +16,10 @@
 # branch was created or how deep the fetch was. Scale this to a changed-files diff only when
 # the full sweep becomes slow.
 #
+# The ::error file=...:: lines are GitHub Actions workflow commands — they render as
+# annotations on the offending line in the pull request diff.
+# https://docs.github.com/actions/reference/workflows-and-actions/workflow-commands
+#
 set -uo pipefail
 
 exit_code=0

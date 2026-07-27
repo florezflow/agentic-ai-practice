@@ -1,3 +1,10 @@
+// A .bicepparam is template + values = one deployment. `using` points at the template; the
+// parameter names and types below are checked against it at build time.
+// Reference: https://learn.microsoft.com/azure/azure-resource-manager/bicep/parameter-files
+//
+// This file must also be listed in the `configuration` input of .github/workflows/deploy.yml —
+// that list is the only enumeration of deployable configurations.
+
 using '../../resource-groups.bicep'
 
 // Run locally, exactly as the deploy workflow does:

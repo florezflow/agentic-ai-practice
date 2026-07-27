@@ -1,7 +1,13 @@
 ---
 name: docs-researcher
 description: Answers Azure and Bicep questions from official Microsoft documentation via MCP, with citations. Has no filesystem access. Use to check API versions, resource schemas and Azure behaviour before writing a template.
+# `server/*` grants every tool from one MCP server and nothing else — no read, no execute.
+# Reference: https://docs.github.com/copilot/reference/custom-agents-configuration
 tools: ["microsoft-learn/*"]
+
+# Declaring the MCP server HERE rather than in Settings -> Copilot -> MCP servers means the
+# capability lives in git, where a reviewer can see it in a diff. Repository-level MCP config
+# is invisible to review. See docs/mcp-and-firewall.md.
 mcp-servers:
   microsoft-learn:
     type: 'http'
