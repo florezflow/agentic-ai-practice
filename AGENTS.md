@@ -4,7 +4,8 @@ Canonical instructions for every AI tool working in this repository — GitHub C
 agent, code review, CLI), Claude Code, and anything else that reads `AGENTS.md`. `CLAUDE.md`
 is a pointer to this file, so there is one canon and no drift between tools.
 
-If you are a human: this file is also the fastest description of how the repo works.
+If you are a human: this file is also the fastest description of how the repo works. For the
+official documentation behind any of it, see [`docs/reference-links.md`](docs/reference-links.md).
 
 ---
 

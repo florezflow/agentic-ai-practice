@@ -7,24 +7,47 @@
 # required checks, and a review. An agent that could push would bypass all four.
 #
 # Triggered by a label rather than by the failure itself, so a human decides when it runs.
+#
+# Docs for every field below: https://github.github.com/gh-aw/reference/frontmatter/
+
+# WHEN it runs. Any label on any issue starts it; the prompt then checks the label is
+# `fix-version-sync` and stops otherwise.
+# https://github.github.com/gh-aw/reference/triggers/
 on:
   issues:
     types: [labeled]
 
+# WHAT IT MAY READ. Note `contents: read` — this workflow *changes* files, yet still only has
+# read permission. The write happens through `safe-outputs` below, in a separate job whose
+# permissions the agent itself never holds.
+# https://github.github.com/gh-aw/reference/permissions/
 permissions:
   contents: read
   issues: read
 
+# WHICH AI runs it. https://github.github.com/gh-aw/reference/engines/
 engine: copilot
 
+# NETWORK access: a curated allowlist, not the open internet.
+# https://github.github.com/gh-aw/reference/network/
 network: defaults
 
+# WHICH GITHUB TOOLS the agent gets. https://github.github.com/gh-aw/reference/tools/
 tools:
   github:
     # It reads one issue and some files. It does not read pull requests, so it does not get
     # the toolset that would require `pull-requests: read`.
     toolsets: [context, repos, issues]
 
+# WHAT IT MAY WRITE — the entire list, and the most important five lines in the repo.
+#
+# `create-pull-request`, NOT push access. Its output therefore faces a branch, the three
+# required checks and a review, exactly like a human's. An agent that could push would bypass
+# all four, and no amount of careful prompting would put them back.
+#
+# A repository variable `GH_AW_POLICY_ALLOW_CREATE_PULL_REQUEST=false` disables this from
+# outside the file, which the agent cannot reach.
+# https://github.github.com/gh-aw/reference/safe-outputs/
 safe-outputs:
   create-pull-request:
     max: 1

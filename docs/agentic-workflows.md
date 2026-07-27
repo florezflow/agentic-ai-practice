@@ -87,6 +87,61 @@ On an organisation-owned repository you would instead add `copilot-requests: wri
 That difference — personal repo needs a token, org repo needs a policy — is the kind of thing
 the exam asks about.
 
+## Choosing a model — and the failure it causes
+
+`gh aw` defaults to `claude-sonnet-4.6`. **That model is not available on every Copilot tier**,
+and when it isn't, the run dies with:
+
+```
+[copilot-harness] attempt 1: model not supported — not retrying
+(the requested model is unavailable for this subscription tier;
+ specify a supported model in the workflow frontmatter)
+```
+
+To find out what your token can actually use, run any workflow once and read
+`agent/sandbox/firewall/logs/api-proxy-logs/models.json` from the run artefacts. It lists the
+models the server offered *your* subscription — which is a shorter list than the catalogue in
+`activation/models.json`.
+
+Set the model repository-wide rather than per workflow:
+
+```bash
+gh aw env get aw-env.yml
+# set default_model_copilot: "gpt-4.1"
+gh aw env update aw-env.yml --scope repo
+```
+
+Observed on this repo's Copilot seat (an organisation-assigned one), four runs:
+
+| Model | Listed? | Result |
+|---|---|---|
+| `claude-sonnet-4.6` (gh-aw default) | no | ✗ `model not supported` — never starts |
+| `claude-sonnet-5` | **yes** | ✗ ran 41s, produced a good review, then `HTTP 403` |
+| `gpt-5.5` | **yes** | ✗ same `HTTP 403`, same point in the run |
+| `gpt-4.1` | yes | ✓ Completed and posted. 3.25 AI credits |
+
+**The conclusion those four runs support: this seat can use base models through the CLI, but
+not premium ones.** It is not an Anthropic-versus-OpenAI split — `gpt-5.5` fails exactly like
+`claude-sonnet-5`. `gpt-4.1` is the included model and works.
+
+Two traps in that table:
+
+- **Being listed in `models.json` does not mean you may use it.** The list is what the server
+  advertises; the entitlement check happens per request.
+- **The failure reports as `failureClass=authentication_failed` with HTTP 403**, and the CLI
+  suggests checking `COPILOT_PROVIDER_API_KEY`. The token is fine. Nothing in the error names
+  the model or the entitlement, which is what makes this cost an afternoon.
+
+To use a premium model you need either an organisation policy that permits premium models for
+Copilot CLI, or a personal Copilot subscription with its own credit allowance, rather than an
+org-assigned seat.
+
+### Cost, measured
+
+The comment footer reports actual spend. The `gpt-4.1` review of a 21-file pull request cost
+**3.25 AI credits**, so the repository caps (30 per run, 100 per day) allow roughly 30 reviews
+a day. Adjust once you have your own numbers.
+
 ## Agentic workflows vs. the cloud agent
 
 Both run Copilot; they are not the same thing and are configured separately.

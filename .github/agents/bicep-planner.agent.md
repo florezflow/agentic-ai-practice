@@ -1,6 +1,9 @@
 ---
 name: bicep-planner
 description: Produces a reviewable implementation plan for a Bicep change and writes it to docs/plans/. Cannot run commands. Use before any change larger than a one-line edit.
+# `tools:` is the whole guardrail. Aliases: read, edit, search, execute, web, agent, todo.
+# Omitting this property grants EVERYTHING — a blank tools list is not a safe default.
+# Reference: https://docs.github.com/copilot/reference/custom-agents-configuration
 tools: ["read", "search", "edit"]
 ---
 

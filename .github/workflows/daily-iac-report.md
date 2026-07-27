@@ -1,12 +1,23 @@
 ---
-# A scheduled reporter. Reads the repository's own operational signals and writes one issue.
+# A reporter. Reads the repository's own operational signals and writes one issue.
 #
 # The interesting property is that it is read-only over everything it inspects. It cannot fix
 # what it finds, which keeps the report honest — a reporter that can act starts reporting the
 # things it can act on.
-on:
-  schedule: daily
+#
+# Docs for every field below: https://github.github.com/gh-aw/reference/frontmatter/
 
+# WHEN it runs. `workflow_dispatch` = manual only, from the Actions tab or `gh aw run`.
+#
+# This was `schedule: daily`, which compiles to a real cron and spends AI credits every night
+# whether anyone reads the issue or not. Manual while learning; switch back once you know what
+# a run actually costs. Trigger syntax: https://github.github.com/gh-aw/reference/triggers/
+on:
+  workflow_dispatch:
+
+# WHAT IT MAY READ. Everything here is `read` — this workflow inspects, it never changes.
+# Writes are declared separately under `safe-outputs` below.
+# https://github.github.com/gh-aw/reference/permissions/
 permissions:
   contents: read
   issues: read
@@ -14,14 +25,25 @@ permissions:
   actions: read
   security-events: read
 
+# WHICH AI runs it. `copilot` is the default; `claude`, `codex` and `gemini` also exist and
+# need their own API-key secret. https://github.github.com/gh-aw/reference/engines/
 engine: copilot
 
+# NETWORK access for the agent. `defaults` = a curated allowlist, not the open internet.
+# https://github.github.com/gh-aw/reference/network/
 network: defaults
 
+# WHICH GITHUB TOOLS the agent gets. `default` is the broad set; this workflow genuinely reads
+# issues, pull requests, runs and alerts, so it keeps it.
+# https://github.github.com/gh-aw/reference/tools/
 tools:
   github:
     toolsets: [default]
 
+# WHAT IT MAY WRITE — and this is the entire list. An agentic workflow is read-only unless a
+# capability appears here, so this workflow can open one issue and do nothing else. No prompt,
+# and no prompt injection, can extend it.
+# https://github.github.com/gh-aw/reference/safe-outputs/
 safe-outputs:
   create-issue:
     max: 1

@@ -35,6 +35,10 @@ then layered on top of that, where it can actually be exercised and observed.
 Full mapping: [`docs/gh600-domain-map.md`](docs/gh600-domain-map.md).
 Labs: [`docs/labs/`](docs/labs/).
 
+**New to any of this?** [`docs/reference-links.md`](docs/reference-links.md) collects every
+official documentation page this repo depends on, in one place. Files across the repo carry
+short comments pointing into it.
+
 ## Layout
 
 ```

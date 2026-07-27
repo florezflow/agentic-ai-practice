@@ -1,3 +1,11 @@
+// Reference:
+//   Bicep language          https://learn.microsoft.com/azure/azure-resource-manager/bicep/
+//   user-defined types      https://learn.microsoft.com/azure/azure-resource-manager/bicep/user-defined-data-types
+//   safe dereference (.?)   https://learn.microsoft.com/azure/azure-resource-manager/bicep/operator-safe-dereference
+//   loops                   https://learn.microsoft.com/azure/azure-resource-manager/bicep/loops
+//   deployment stacks       https://learn.microsoft.com/azure/azure-resource-manager/bicep/deployment-stacks
+//   all links               docs/reference-links.md
+
 //MARK: - METADATA
 metadata name = 'Resource Groups'
 metadata owner = 'ACC-Platform'

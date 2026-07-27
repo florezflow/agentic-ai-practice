@@ -1,6 +1,9 @@
 ---
 name: bicep-builder
 description: Implements a plan that already exists in docs/plans/, validating every change with bicep build and the version-sync script. Use only after a plan has been agreed.
+# The only agent here with `execute` (shell). It can therefore validate its own work — which
+# is the point, and also why its instructions below are stricter than the others'.
+# Reference: https://docs.github.com/copilot/reference/custom-agents-configuration
 tools: ["read", "search", "edit", "execute"]
 ---
 

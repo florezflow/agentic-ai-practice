@@ -16,6 +16,13 @@ name: Deploy
 # `prod`, you would have to approve the deployment before you could see what it does, which
 # is exactly backwards. The `-preview` environments are ungated copies holding the same
 # values, so the gate lands on `apply` alone.
+#
+# Reference:
+#   environments & protection rules  https://docs.github.com/actions/how-tos/deploy/configure-and-manage-deployments/manage-environments
+#   OIDC login to Azure              https://docs.github.com/actions/how-tos/secure-your-work/security-harden-deployments/oidc-in-azure
+#   what-if and its limitations      https://learn.microsoft.com/azure/azure-resource-manager/templates/deploy-what-if
+#   deployment stacks                https://learn.microsoft.com/azure/azure-resource-manager/bicep/deployment-stacks
+#   all links in one place           docs/reference-links.md
 
 on:
   workflow_dispatch:
