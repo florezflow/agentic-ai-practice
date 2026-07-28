@@ -38,7 +38,14 @@ network: defaults
 # https://github.github.com/gh-aw/reference/tools/
 tools:
   github:
-    toolsets: [default]
+    # NOT `default`. The first real run failed to check workflow runs, code scanning alerts
+    # and deployment status, and said so in its own report — the `default` toolset covers
+    # issues, pull requests, commits, releases and contents, and nothing else.
+    #
+    # Permissions and toolsets are two separate grants. `actions: read` and
+    # `security-events: read` were already set below; without the matching toolsets the agent
+    # had the right to read those things and no tool with which to do it.
+    toolsets: [context, repos, issues, pull_requests, actions, code_security]
 
 # WHAT IT MAY WRITE — and this is the entire list. An agentic workflow is read-only unless a
 # capability appears here, so this workflow can open one issue and do nothing else. No prompt,
