@@ -56,6 +56,34 @@ toolsets: [context, repos, issues]
 
 Both compile with zero warnings and neither can read something it has no use for.
 
+### …and the compiler only warns in one direction
+
+The trap is the inverse case, and `daily-iac-report` walked straight into it.
+
+It was written with `permissions: actions: read` and `security-events: read` — the right to
+read workflow runs and code scanning alerts — but `toolsets: [default]`, which covers issues,
+pull requests, commits, releases and contents, and **nothing else**. The agent had the
+permission and no tool with which to use it.
+
+`gh aw compile` reported **0 errors, 0 warnings**. It checks that your permissions cover your
+toolsets; it does not check that your toolsets cover your prompt. Too few tools is not a
+compile error, it is a silently smaller report.
+
+What caught it was the workflow's own instruction to declare what it could not check:
+
+> ### Not checked — tooling gap
+> This session's available GitHub MCP tools only cover issues, pull requests, commits,
+> releases, and repository contents. There is no tool exposed for listing GitHub Actions
+> workflow runs or code scanning alerts. […] Flagging this as a monitoring gap.
+
+gh-aw also raised a `missing_tool` safe output, which opened a second issue automatically.
+Without either, the report would simply have said "0 workflow failures" — indistinguishable
+from a healthy repository, forever.
+
+The rule that survives: **`permissions` and `toolsets` are two separate grants, and you need
+both.** Ask for the smallest toolset that covers what the prompt actually asks the agent to
+do — then read the first real run to find out whether you guessed right.
+
 ## Working on them
 
 ```bash
