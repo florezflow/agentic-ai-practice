@@ -1,0 +1,31 @@
+# Dependabot keeps the GitHub Actions used by the hand-written workflows current, and opens a
+# pull request when one falls behind. That pull request faces the same three required checks
+# and the same review as any other change.
+#
+# Reference: https://docs.github.com/code-security/dependabot/working-with-dependabot/dependabot-options-reference
+
+version: 2
+
+updates:
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+    open-pull-requests-limit: 5
+    commit-message:
+      prefix: "chore"
+    labels:
+      - "dependencies"
+
+    ignore:
+      # `gh aw` owns these, not Dependabot.
+      #
+      # Dependabot scans every .yml under .github/workflows/, which includes the generated
+      # *.lock.yml files. Left alone it would open pull requests bumping the pinned SHA in
+      # those files — and `gh aw compile` would revert every one of them, because the lock
+      # files are regenerated from .github/aw/actions-lock.json.
+      #
+      # The correct update path for these is:  gh aw upgrade --create-pull-request
+      # See .github/aw/README.md.
+      - dependency-name: "github/gh-aw-actions*"
