@@ -69,7 +69,7 @@ jobs:
       azure_configured: ${{ steps.guard.outputs.configured }}
     steps:
       - name: Checkout
-        uses: actions/checkout@v5
+        uses: actions/checkout@v7
 
       - name: Verify configuration matches the target environment
         env:
@@ -117,7 +117,7 @@ jobs:
 
       - name: Azure login (OIDC)
         if: steps.guard.outputs.configured == 'true'
-        uses: azure/login@v2
+        uses: azure/login@v3
         with:
           client-id: ${{ vars.AZURE_CLIENT_ID }}
           tenant-id: ${{ vars.AZURE_TENANT_ID }}
@@ -191,7 +191,7 @@ jobs:
 
       - name: Upload what-if artefact
         if: always() && steps.guard.outputs.configured == 'true'
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: what-if-${{ github.run_number }}
           path: what-if/
@@ -210,7 +210,7 @@ jobs:
       contents: read
     steps:
       - name: Checkout
-        uses: actions/checkout@v5
+        uses: actions/checkout@v7
 
       - name: Check Azure OIDC configuration
         id: guard
@@ -224,7 +224,7 @@ jobs:
 
       - name: Azure login (OIDC)
         if: steps.guard.outputs.configured == 'true'
-        uses: azure/login@v2
+        uses: azure/login@v3
         with:
           client-id: ${{ vars.AZURE_CLIENT_ID }}
           tenant-id: ${{ vars.AZURE_TENANT_ID }}

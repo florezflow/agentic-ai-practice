@@ -19,12 +19,39 @@ your response and in the pull request description, even when it is obviously cor
 - Never add `pull_request_target`. It runs with a writable token in the context of the base
   repository while checking out untrusted head code. There is no use for it here.
 
-## Pinning
+## Pinning and updates
 
 - The Bicep CLI version is pinned in one `env: BICEP_VERSION` per workflow. Bump it there and
-  nowhere else.
-- Actions are referenced by major tag (`actions/checkout@v5`). If a workflow ever handles
-  secrets that matter, move to full SHA pinning.
+  nowhere else. Keep it equal to the pin in `copilot-setup-steps.yml`, or the agent validates
+  with a different compiler than CI.
+- Actions are referenced by major tag (`actions/checkout@v7`), so they pick up patches
+  automatically. Move to full SHA pinning if a workflow ever handles a secret that matters.
+
+**Two categories of action dependency, two owners.** Confusing them is the usual mistake:
+
+| Action | Owner | How it is updated |
+|---|---|---|
+| `github/gh-aw-actions/*` | `gh aw` | `gh aw upgrade --create-pull-request` |
+| everything else | you / Dependabot | edit the YAML, or merge the Dependabot pull request |
+
+Never hand-edit a version in a `.lock.yml`. Those files are generated from
+`.github/aw/actions-lock.json` and `gh aw compile` reverts the edit without saying so.
+`.github/dependabot.yml` ignores `github/gh-aw-actions*` for exactly this reason.
+
+**When deciding whether to take an update**, upgrade if any of these holds — not merely
+because a newer tag exists:
+
+1. The release notes name a security fix.
+2. Your own run logs carry a deprecation warning with a date attached.
+3. A bug you have actually hit is fixed.
+4. You are more than one *stable* release behind.
+
+Check whether a release is a pre-release before treating it as the next version; the tag list
+in the GitHub UI does not show this, and some projects ship mostly pre-releases:
+
+```bash
+gh api /repos/OWNER/REPO/releases --jq '.[] | "\(.tag_name)\t\(.prerelease)"'
+```
 
 ## Checks must be able to fail
 
