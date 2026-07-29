@@ -120,7 +120,7 @@ find which artefact is missing and add it.
 
 ## Part D — Stalled and partial executions
 
-`daily-iac-report` exists to surface exactly this. Force each case:
+`weekly-iac-report` exists to surface exactly this. Force each case:
 
 | Case | How to create it |
 |---|---|
@@ -131,7 +131,7 @@ find which artefact is missing and add it.
 Then run the reporter:
 
 ```bash
-gh aw run daily-iac-report
+gh aw run weekly-iac-report
 ```
 
 ### Verify

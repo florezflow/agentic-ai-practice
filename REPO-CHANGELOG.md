@@ -6,6 +6,29 @@ own `CHANGELOG.md`; this file records what changed about the repository as a who
 Format: `## YYYY.MM.DD[-N] - DD.MM.YYYY`, newest first. The `-N` sequence number distinguishes
 multiple entries on the same day.
 
+## 2026.07.28 - 28.07.2026
+
+- Upgraded `gh aw` to v0.83.4 (extension and `.github/aw/actions-lock.json`), taking the
+  "secret argv exposure mitigated" fix. v0.83.2 and v0.83.3 are pre-releases upstream, which
+  the GitHub tag list does not show.
+- Bumped the actions this repo owns: `actions/checkout` v5→v7, `actions/upload-artifact`
+  v4→v7, `azure/login` v2→v3, `github/codeql-action` v3→v4, clearing the Node 20 and CodeQL
+  deprecation warnings that had been appearing in every run.
+- Added `.github/dependabot.yml` for the weekly sweep, ignoring `github/gh-aw-actions*` —
+  Dependabot scans the generated `*.lock.yml` files and would open pull requests that
+  `gh aw compile` reverts. Those stay on `gh aw upgrade`.
+- Fixed `daily-iac-report`: it had `actions: read` and `security-events: read` but
+  `toolsets: [default]`, so it had the right to read workflow runs and code scanning alerts
+  and no tool to do it with. Three of its four sections reported "not checked" — which the
+  workflow said out loud, because it is instructed to. `gh aw compile` reported zero warnings:
+  it verifies that permissions cover toolsets, not that toolsets cover the prompt.
+- Renamed it to `weekly-iac-report` and set `schedule: weekly on monday`. A run costs ~25 AI
+  credits, so daily would be ~750/month; and a report nobody reads on a quiet day trains you
+  to ignore the one that matters.
+- Added `.github/aw/README.md` explaining the actions lock file. A `"_comment"` key in the
+  JSON survives until the first real regeneration and is then dropped silently, which is worse
+  than no comment — so the explanation lives in a sibling file.
+
 ## 2026.07.26 - 26.07.2026
 
 - Wiped the unused Python/Azure-AI scaffold and laid the Bicep IaC skeleton:
