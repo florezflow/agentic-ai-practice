@@ -103,7 +103,7 @@ Objective bullets below are from the
 | Produce artefacts suitable for review and audit | Plan files, agentic-workflow run logs, `gh aw audit` |
 | Document decisions, handoffs, outcomes | Plan `Status` line; PR "Agent involvement" section |
 | Post-hoc analysis of multi-agent behaviour | `gh aw logs`, `gh aw audit <run-id>` |
-| Identify failed, partial, stalled executions | `daily-iac-report` surfaces failing runs and stalled deployments |
+| Identify failed, partial, stalled executions | `weekly-iac-report` surfaces failing runs and stalled deployments |
 | Multi-agent recovery: rollback, human-in-the-loop | Revert PR; the `prod` approval gate |
 | Add / update / retire agents without disruption | Agent profiles are files — add, edit or delete one in a PR |
 

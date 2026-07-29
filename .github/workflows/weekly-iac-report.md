@@ -7,12 +7,16 @@
 #
 # Docs for every field below: https://github.github.com/gh-aw/reference/frontmatter/
 
-# WHEN it runs. `workflow_dispatch` = manual only, from the Actions tab or `gh aw run`.
+# WHEN it runs. Weekly, plus manual from the Actions tab or `gh aw run`.
 #
-# This was `schedule: daily`, which compiles to a real cron and spends AI credits every night
-# whether anyone reads the issue or not. Manual while learning; switch back once you know what
-# a run actually costs. Trigger syntax: https://github.github.com/gh-aw/reference/triggers/
+# `weekly on monday` is gh-aw's friendly form; it compiles to a real cron with a scattered
+# minute so every repository using it does not fire at the same instant.
+#
+# Weekly rather than daily on purpose. A run costs ~25 AI credits, so daily is ~750/month
+# against a capped allowance — and a report nobody reads on a quiet day trains you to ignore
+# the one that matters. Trigger syntax: https://github.github.com/gh-aw/reference/triggers/
 on:
+  schedule: weekly on monday
   workflow_dispatch:
 
 # WHAT IT MAY READ. Everything here is `read` — this workflow inspects, it never changes.
@@ -56,9 +60,9 @@ safe-outputs:
     max: 1
 ---
 
-# Daily IaC status report
+# Weekly IaC status report
 
-Summarise the state of this infrastructure-as-code repository over the last 24 hours and open
+Summarise the state of this infrastructure-as-code repository over the last 7 days and open
 one issue with the result.
 
 ## What to gather
@@ -68,17 +72,17 @@ one issue with the result.
 2. **Failing workflow runs** — any run of `PR Validation`, `Deploy` or `Copilot Setup Steps`
    that failed. For each, the job that failed and the error, not just the run URL.
 3. **Code scanning** — open PSRule findings, by severity. Note anything that appeared in the
-   last day.
+   last week.
 4. **Deployments** — any run of `Deploy`, which environment, whether it is still waiting for
    an approver. A deployment sitting unapproved for a long time is worth surfacing.
 
 ## What to write
 
 Lead with what needs a human. If nothing does, say that in the first line and keep the rest
-short — a daily report that opens with three paragraphs of throat-clearing gets filtered.
+short — a weekly report that opens with three paragraphs of throat-clearing gets filtered.
 
 ```markdown
-## IaC status — <date>
+## IaC status — week of <date>
 
 <one line: what needs attention, or "nothing needs attention">
 
@@ -104,4 +108,4 @@ short — a daily report that opens with three paragraphs of throat-clearing get
 - **Do not recommend fixes you cannot justify.** You are read-only over this repository by
   design; a recommendation you would have to inspect code to support is one you should not
   make. Point at the failing run and let a human open it.
-- **Do not editorialise about trends** from a single day of data.
+- **Do not editorialise about trends** from a single week of data.
