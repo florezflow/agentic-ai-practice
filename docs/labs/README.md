@@ -26,7 +26,7 @@ Full objective-by-objective mapping: [`../gh600-domain-map.md`](../gh600-domain-
 | Optional, everywhere | Azure OIDC — the deploy workflow degrades to a clean skip without it |
 
 ```bash
-gh secret set COPILOT_GITHUB_TOKEN --repo mflorez-bag/agentic-ai-practice
+gh secret set COPILOT_GITHUB_TOKEN --repo florezflow/agentic-ai-practice
 ```
 
 ## Order
@@ -53,10 +53,10 @@ Only the `whatif` job uses it, and it self-skips when unset. To enable, create a
 registration with federated credentials for these subjects:
 
 ```
-repo:mflorez-bag/agentic-ai-practice:environment:test
-repo:mflorez-bag/agentic-ai-practice:environment:prod
-repo:mflorez-bag/agentic-ai-practice:environment:test-preview
-repo:mflorez-bag/agentic-ai-practice:environment:prod-preview
+repo:florezflow/agentic-ai-practice:environment:test
+repo:florezflow/agentic-ai-practice:environment:prod
+repo:florezflow/agentic-ai-practice:environment:test-preview
+repo:florezflow/agentic-ai-practice:environment:prod-preview
 ```
 
 Grant it **Contributor** on a sandbox subscription — subscription-scope `what-if` needs

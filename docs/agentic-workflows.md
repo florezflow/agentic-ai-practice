@@ -107,7 +107,7 @@ These are **authored and compiled but not yet runnable**. On a personal reposito
 2. A repository secret `COPILOT_GITHUB_TOKEN` — a fine-grained personal access token:
 
    ```bash
-   gh secret set COPILOT_GITHUB_TOKEN --repo mflorez-bag/agentic-ai-practice
+   gh secret set COPILOT_GITHUB_TOKEN --repo florezflow/agentic-ai-practice
    ```
 
 On an organisation-owned repository you would instead add `copilot-requests: write` to

@@ -58,7 +58,7 @@ AGENTS.md                Canonical instructions for every AI tool
 ## Getting started
 
 ```bash
-gh repo clone mflorez-bag/agentic-ai-practice
+gh repo clone florezflow/agentic-ai-practice
 cd agentic-ai-practice
 
 # Validate everything locally, exactly as CI does

@@ -43,7 +43,7 @@ down here.
 **Environments:**
 
 ```bash
-R=mflorez-bag/agentic-ai-practice
+R=florezflow/agentic-ai-practice
 
 # prod: required reviewer + wait timer + main-only
 gh api -X PUT "/repos/$R/environments/prod" --input - <<'JSON'
@@ -93,14 +93,14 @@ gh workflow run deploy.yml \
   -f confirmApply=true
 
 RID=$(gh run list --workflow=deploy.yml --limit 1 --json databaseId --jq '.[0].databaseId')
-gh api "/repos/mflorez-bag/agentic-ai-practice/actions/runs/$RID/pending_deployments" \
+gh api "/repos/florezflow/agentic-ai-practice/actions/runs/$RID/pending_deployments" \
   --jq '.[] | {environment: .environment.name, wait_timer, current_user_can_approve, reviewers: [.reviewers[].reviewer.login]}'
 ```
 
 ### Verify
 
 ```json
-{"current_user_can_approve":true,"environment":"prod","reviewers":["mflorez-bag"],"wait_timer":1}
+{"current_user_can_approve":true,"environment":"prod","reviewers":["florezflow"],"wait_timer":1}
 ```
 
 `what-if` has **already completed** and `apply` is waiting. That ordering is the point: the
@@ -109,8 +109,8 @@ evidence exists before the decision is asked for.
 Approve:
 
 ```bash
-ENVID=$(gh api "/repos/mflorez-bag/agentic-ai-practice/actions/runs/$RID/pending_deployments" --jq '.[0].environment.id')
-gh api -X POST "/repos/mflorez-bag/agentic-ai-practice/actions/runs/$RID/pending_deployments" \
+ENVID=$(gh api "/repos/florezflow/agentic-ai-practice/actions/runs/$RID/pending_deployments" --jq '.[0].environment.id')
+gh api -X POST "/repos/florezflow/agentic-ai-practice/actions/runs/$RID/pending_deployments" \
   -F "environment_ids[]=$ENVID" -f state=approved -f comment="Reviewed the what-if."
 ```
 
@@ -124,7 +124,7 @@ autonomy levels, one workflow.
 Make the repo private:
 
 ```bash
-gh repo edit mflorez-bag/agentic-ai-practice --visibility private --accept-visibility-change-consequences
+gh repo edit florezflow/agentic-ai-practice --visibility private --accept-visibility-change-consequences
 ```
 
 Check the `prod` environment settings in the UI.
@@ -137,7 +137,7 @@ rules beyond deployment branches are **public-repository only**; private repos n
 Set it back to public immediately:
 
 ```bash
-gh repo edit mflorez-bag/agentic-ai-practice --visibility public --accept-visibility-change-consequences
+gh repo edit florezflow/agentic-ai-practice --visibility public --accept-visibility-change-consequences
 ```
 
 Re-check the environment settings and re-add the reviewer if it did not survive.
@@ -152,7 +152,7 @@ of plan-dependent constraint the exam tests.
 1. Enable code-owner review:
 
    ```bash
-   gh api "/repos/mflorez-bag/agentic-ai-practice/rulesets/<id>" --jq '.rules'
+   gh api "/repos/florezflow/agentic-ai-practice/rulesets/<id>" --jq '.rules'
    # set require_code_owner_review: true in the pull_request rule, then PUT it back
    ```
 
