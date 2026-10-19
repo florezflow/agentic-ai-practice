@@ -16,25 +16,25 @@
 #  2. Later rules win. Keep the catch-all first.
 
 # Everything, by default.
-*                           @mflorez-bag
+*                           @florezflow
 
 # --- Agent control surface --------------------------------------------------------------
 # Changing any of these changes what an agent is permitted to do.
-/AGENTS.md                  @mflorez-bag
-/CLAUDE.md                  @mflorez-bag
-/.github/agents/            @mflorez-bag
-/.github/instructions/      @mflorez-bag
-/.github/copilot-instructions.md  @mflorez-bag
-/.claude/                   @mflorez-bag
-/.mcp.json                  @mflorez-bag
+/AGENTS.md                  @florezflow
+/CLAUDE.md                  @florezflow
+/.github/agents/            @florezflow
+/.github/instructions/      @florezflow
+/.github/copilot-instructions.md  @florezflow
+/.claude/                   @florezflow
+/.mcp.json                  @florezflow
 
 # --- CI/CD control surface --------------------------------------------------------------
 # Changing these changes the gates themselves, including whether they run at all.
-/.github/workflows/         @mflorez-bag
-/.github/scripts/           @mflorez-bag
-/.github/CODEOWNERS         @mflorez-bag
-/ps-rule.yaml               @mflorez-bag
-/bicepconfig.json           @mflorez-bag
+/.github/workflows/         @florezflow
+/.github/scripts/           @florezflow
+/.github/CODEOWNERS         @florezflow
+/ps-rule.yaml               @florezflow
+/bicepconfig.json           @florezflow
 
 # --- Production configuration -----------------------------------------------------------
-/patterns/*/configurations/prod/   @mflorez-bag
+/patterns/*/configurations/prod/   @florezflow

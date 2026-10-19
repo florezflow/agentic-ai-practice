@@ -103,7 +103,7 @@ The PR touches `.github/agents/bicep-planner.agent.md`, which `CODEOWNERS` owns.
 block rather than just the ownership, temporarily enable code-owner review:
 
 ```bash
-gh api /repos/mflorez-bag/agentic-ai-practice/rulesets/<id> --jq '.rules[] | select(.type=="pull_request")'
+gh api /repos/florezflow/agentic-ai-practice/rulesets/<id> --jq '.rules[] | select(.type=="pull_request")'
 # set require_code_owner_review: true, re-PUT the ruleset, then re-check the PR
 ```
 

@@ -184,7 +184,7 @@ gh run view <run-id>
 Set the secret to make it work:
 
 ```bash
-gh secret set COPILOT_GITHUB_TOKEN --repo mflorez-bag/agentic-ai-practice
+gh secret set COPILOT_GITHUB_TOKEN --repo florezflow/agentic-ai-practice
 ```
 
 ---

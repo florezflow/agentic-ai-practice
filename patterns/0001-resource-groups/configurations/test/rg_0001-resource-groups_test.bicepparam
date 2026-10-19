@@ -24,7 +24,7 @@ param parBaseConfig = {
   }
   tags: {
     CostCenter: '0000'
-    Creator: 'mflorez-bag'
+    Creator: 'florezflow'
     CreationDate: '26.07.2026'
     Description: 'GH-600 practice resource groups, test environment'
     IaC: 'DeploymentStack: 0001-resource-groups | Subscription: gh600-test'
