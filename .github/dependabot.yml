@@ -29,3 +29,7 @@ updates:
       # The correct update path for these is:  gh aw upgrade --create-pull-request
       # See .github/aw/README.md.
       - dependency-name: "github/gh-aw-actions*"
+      # These two appear only in the generated *.lock.yml files, so `gh aw` owns them as well.
+      # If a hand-written workflow starts using one, remove its line here.
+      - dependency-name: "actions/download-artifact"
+      - dependency-name: "actions/setup-node"
